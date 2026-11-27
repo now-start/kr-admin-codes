@@ -158,7 +158,7 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 | 1 | 원천 조사 스파이크 | 원천별 형식·갱신 주기·과거 보관 범위·매핑 원천·이용 조건 확인, 샘플 파싱 | complete | - | - | [phase1-sources.md](../../../docs/research/phase1-sources.md) |
 | 2 | 스키마 + 파이프라인 | `model` 정의, 수집→정규화→검증→`data/` 생성을 로컬에서 실행 | complete | - | 1 | [plan](../plans/completed/phase2-schema-pipeline.plan.md) · [report](../reports/phase2-schema-pipeline-report.md) |
 | 3 | 배포 자동화 | collect/pages 워크플로, `meta.json`·`changes.json`, jsDelivr 미러 확인 | pending | with 4 | 2 | - |
-| 4 | Java SDK | 내장 스냅샷, 조회·시점·변환·매핑, 갱신·폴백·검증 | pending | with 3 | 2 | - |
+| 4 | Java SDK | 내장 스냅샷, 조회·시점·변환·매핑, 갱신·폴백·검증 | complete | with 3 | 2 | [plan](../plans/completed/phase4-java-sdk.plan.md) · [report](../reports/phase4-java-sdk-report.md) |
 | 5 | 공개 | Maven Central 0.1.0, README·예제, 작성자 프로젝트에 실제 적용 | pending | - | 3, 4 | - |
 
 ### Phase Details
@@ -206,6 +206,8 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 | 반영 방식 | 매일 수집 → PR 리뷰 후 머지 | 자동 배포 | 변경이 드물고 1:N 판단이 필요 |
 | 데이터 범위 | 행정동 + 법정동 + 매핑 | 행정동만, 현재 스냅샷만 | 작성자 결정 |
 | 1차 사용자 | Java 백엔드 운영 서비스 | Java 배치·분석 | 런타임 갱신 설계의 가치가 가장 큼 |
+| 스냅샷 계약 | 레포의 `data/v1` 그대로(`meta.tsv` + TSV 4개, 파일별 sha256·내용 기반 version) | 별도 빌드 산출물(zip 등) | Pages·jsDelivr·jar 내장이 같은 디렉터리를 그대로 씀 (Phase 4) |
+| 원격 갱신 순서 | 데이터 기준일이 지금보다 이른 원격은 건너뜀 | 버전만 다르면 교체 | 오래된 CDN 캐시로 다운그레이드되는 것을 막음. 기준일이 같으면 overrides 수정 같은 정상 갱신이라 허용 (Phase 4) |
 | 주 원천 | 행안부 jscode(말소코드포함) zip | 공공데이터포털 API, 행정표준코드관리시스템 | 행정동·법정동·매핑·전체 이력이 한 파일에 있음. 나머지는 대조 검증용 |
 | 저장소 | GitHub 공개 레포 `now-start/kr-admin-codes` (SSH 주소 `nowstart.org`는 GitHub으로 연결됨) | 비공개 레포로 두기 | 작성자 결정으로 공개 유지. Actions·Pages·jsDelivr를 바로 쓸 수 있음. 처음엔 `nowstart.org`를 Synology Git Server로 잘못 보고 "비공개 개발 → 공개 시 GitHub 미러"로 적었다가 정정 |
 | 이력 범위 | 전체 포함, 정확도 보장은 2023-01-01 이후 (잠정) | 2023년 이후만 담기 | 원천에 이미 있어 추가 비용이 없음. 오래된 데이터 품질은 미검증 |

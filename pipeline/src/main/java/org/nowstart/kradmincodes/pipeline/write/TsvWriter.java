@@ -8,7 +8,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +76,34 @@ public final class TsvWriter {
                 dataset.unresolved(), UNRESOLVED_ORDER, r -> List.of(
                         r.code(), r.sido(), r.sigungu(), r.dong(), date(r.abolishedOn()))));
         files.put(DatasetLayout.SOURCE_FILE, sourceTable(source));
+        files.put(DatasetLayout.META_FILE, metaTable(files, source));
         return files;
+    }
+
+    /** {@code version}은 파일 이름 순으로 {@code "이름:sha256\n"}을 이은 문자열의 sha256. 내용이 같으면 같은 값이다. */
+    private static String metaTable(Map<String, String> files, SourceInfo source) {
+        List<List<String>> hashes = new ArrayList<>();
+        var versionInput = new StringBuilder();
+        for (String name : DatasetLayout.SNAPSHOT_FILES.stream().sorted().toList()) {
+            String hash = sha256Hex(files.get(name));
+            hashes.add(List.of("sha256." + name, hash));
+            versionInput.append(name).append(':').append(hash).append('\n');
+        }
+        List<List<String>> entries = new ArrayList<>();
+        entries.add(List.of("format", DatasetLayout.META_FORMAT));
+        entries.add(List.of("data_date", date(source.dataDate())));
+        entries.add(List.of("version", sha256Hex(versionInput.toString())));
+        entries.addAll(hashes);
+        return table(DatasetLayout.META_HEADER, entries, (a, b) -> 0, Function.identity());
+    }
+
+    private static String sha256Hex(String content) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(content.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256을 쓸 수 없습니다", e);
+        }
     }
 
     private static <T> String table(

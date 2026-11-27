@@ -11,4 +11,4 @@ dependencyResolutionManagement {
     }
 }
 
-include("model", "pipeline")
+include("model", "pipeline", "sdk")

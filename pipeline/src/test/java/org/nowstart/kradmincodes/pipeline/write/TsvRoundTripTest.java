@@ -11,7 +11,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.nowstart.kradmincodes.model.Succession;
@@ -61,6 +66,25 @@ class TsvRoundTripTest {
     }
 
     @Test
+    void writesMetaWithPerFileSha256AndContentVersion() throws Exception {
+        TsvWriter.write(dir, sorted(), SOURCE);
+
+        Map<String, String> meta = new LinkedHashMap<>();
+        List<String> lines = Files.readAllLines(dir.resolve(DatasetLayout.META_FILE), StandardCharsets.UTF_8);
+        assertThat(lines.get(0)).isEqualTo("key\tvalue");
+        lines.subList(1, lines.size()).forEach(line -> meta.put(line.split("\t")[0], line.split("\t")[1]));
+
+        assertThat(meta).containsEntry("format", "1").containsEntry("data_date", "2026-11-11");
+        var versionInput = new StringBuilder();
+        for (String file : DatasetLayout.SNAPSHOT_FILES.stream().sorted().toList()) {
+            String hash = sha256(Files.readAllBytes(dir.resolve(file)));
+            assertThat(meta).containsEntry("sha256." + file, hash);
+            versionInput.append(file).append(':').append(hash).append('\n');
+        }
+        assertThat(meta).containsEntry("version", sha256(versionInput.toString().getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
     void rejectsTabInsideValue() {
         Dataset bad = new Dataset(
                 List.of(admin("1100000000", "서울\t특별시", "", "", "1988-04-23", null)),
@@ -87,6 +111,10 @@ class TsvRoundTripTest {
         Files.writeString(admin, "code\tsido\tsigungu\tdong\tvalid_from\tvalid_to\n1100000000\t서울\n",
                 StandardCharsets.UTF_8);
         assertThatThrownBy(() -> TsvReader.read(dir)).isInstanceOf(PipelineException.class).hasMessageContaining("2번째 줄");
+    }
+
+    private static String sha256(byte[] data) throws NoSuchAlgorithmException {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(data));
     }
 
     private static Dataset unsorted() {
