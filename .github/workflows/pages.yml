@@ -1,0 +1,54 @@
+name: Pages 배포
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/v1/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # SDK 스냅샷 계약: /v1/ = meta.tsv + 데이터 TSV. 바이트를 바꾸지 않고 그대로 복사한다(meta.tsv의 sha256과 맞아야 함)
+      - name: 사이트 만들기 (data/v1 → /v1/)
+        run: |
+          mkdir -p site/v1
+          cp data/v1/*.tsv site/v1/
+          {
+            echo '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+            echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            echo '<title>kr-admin-codes</title></head><body>'
+            echo '<h1>kr-admin-codes</h1>'
+            echo '<p>행정동·법정동 코드와 변경 이력 스냅샷. 원천: 행정안전부 주민등록 게시판. SLA 없음.</p>'
+            echo '<ul>'
+            for f in site/v1/*.tsv; do
+              name=$(basename "$f")
+              echo "<li><a href=\"v1/${name}\">v1/${name}</a></li>"
+            done
+            echo '</ul></body></html>'
+          } > site/index.html
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v5
