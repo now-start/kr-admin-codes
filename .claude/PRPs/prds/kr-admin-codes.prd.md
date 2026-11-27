@@ -48,7 +48,7 @@ We'll know we're right when 공개 후 12개월 동안 공식 변경이 빠짐�
 - [x] 이력 시작 시점 → 원천에 1984~1988년부터 있음. 전체를 담고 정확도 보장은 2023-01-01 이후로 (잠정, 확정 필요)
 - [x] 법정동↔행정동 매핑의 공식 원천 → 같은 zip의 `KIKmix`
 - [x] 과거 스냅샷 확보 경로 → 불필요. 말소코드포함 파일 하나에 전체 이력이 있음
-- [ ] **행정동 데이터 재배포 이용 조건**: 첨부에 공공누리 표시 없음 → 공개 전 행안부 문의 필요
+- [ ] **행정동 데이터 재배포 이용 조건**: 첨부에 공공누리 표시 없음 → 행안부 문의 필요 (레포는 이미 공개 상태라 답을 받기 전에도 `data/v1`이 공개돼 있음)
 - [ ] 1:N 분할 매핑 표현: 단순 목록 vs 비율·필지 수 같은 가중치
 - [ ] 변경내역 hwpx 표 형식이 게시글마다 일정한지 (변환표 수동 보완의 근거)
 - [x] 출장소 코드 포함 여부, 생성일자=말소일자 행(유효기간 0일) 처리 규칙 → 둘 다 원천 그대로 포함, 빈 구간은 어떤 날짜에도 유효하지 않음 (Phase 2)
@@ -122,7 +122,7 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 - 워크플로: `collect.yml`(매일 수집, 변경 시 PR) / `pages.yml`(main 머지 시 Pages 배포) / `release.yml`(태그 시 Maven Central)
 - 배포 경로: `/v1/meta.json`, `/v1/changes.json`, `/v1/snapshots/{version}/{dataset}.{json,tsv}` — 한 번 올린 버전은 덮어쓰지 않음
 - GitHub Pages 제약: 커스텀 헤더 불가(Cache-Control 10분 고정). ETag·304·CORS `*`는 지원 → SDK 로컬 캐시로 해결
-- 미러: `cdn.jsdelivr.net/gh/<아이디>/<repo>@<태그>/data/...`
+- 미러: `cdn.jsdelivr.net/gh/now-start/kr-admin-codes@<태그>/data/...`
 - SDK: 불변 스냅샷을 `AtomicReference`로 통째 교체, 데몬 스레드 갱신, sha256 일치 시에만 교체, 갱신 실패 시 예외 없이 경고 로그
 - 데이터 모델: 모든 레코드에 `validFrom`/`validTo` → 공지된 미래 변경을 미리 배포해 시행일에 자동 전환
 - 1:N 분할처럼 사람 판단이 필요한 경우는 `overrides/`에 수동 기록하고 파이프라인이 병합
@@ -139,7 +139,7 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 | 과거 스냅샷을 못 구해 이력 공백 | M | 이력 시작 시점 제한, 변경 공지 문서로 역산, 대조용 출처 확보 |
 | 프로젝트 방치로 데이터가 낡음 | M | `meta.json`에 `lastCheckedAt`, SDK가 오래된 데이터 경고, README에 최종 갱신일 |
 | 업무 경험에서 출발한 프로젝트 | M | 회사 코드·내부 데이터 사용 금지, 공개 원천만 사용, 겸업·IP 규정 확인 |
-| 행정동 데이터 이용 조건 (첨부에 공공누리 표시 없음) | M | 공개 전 행안부 문의, 답을 받을 때까지 비공개 레포로 개발, 출처 표기 |
+| 행정동 데이터 이용 조건 (첨부에 공공누리 표시 없음, 레포는 이미 공개) | M | 행안부 문의, 출처 표기. 문제가 되면 `data/` 공개 중단 또는 레포 비공개 전환 |
 | Maven Central 등록(네임스페이스·GPG) | L | `io.github.<아이디>` 네임스페이스, `com.vanniktech.maven.publish` 플러그인 |
 
 ---
@@ -175,7 +175,7 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 
 **Phase 3: 배포 자동화**
 - **Goal**: 사람 손 없이 매일 수집하고, 머지하면 공개
-- **Scope**: GitHub 미러 레포 생성과 푸시 미러 설정(공개 시점), `collect.yml`(변경 시 PR, 실패 시 Issue), `pages.yml`, `meta.json`·`changes.json`. 그 전까지 파이프라인은 로컬에서 실행
+- **Scope**: `collect.yml`(변경 시 PR, 실패 시 Issue), `pages.yml`, `meta.json`·`changes.json`. 레포가 이미 GitHub에 있어서 별도 미러 없이 바로 Actions·Pages를 쓴다
 - **Success signal**: 원천 변경을 흉내 낸 커밋으로 PR → 머지 → Pages 반영까지 자동으로 돎
 
 **Phase 4: Java SDK**
@@ -207,7 +207,7 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 | 데이터 범위 | 행정동 + 법정동 + 매핑 | 행정동만, 현재 스냅샷만 | 작성자 결정 |
 | 1차 사용자 | Java 백엔드 운영 서비스 | Java 배치·분석 | 런타임 갱신 설계의 가치가 가장 큼 |
 | 주 원천 | 행안부 jscode(말소코드포함) zip | 공공데이터포털 API, 행정표준코드관리시스템 | 행정동·법정동·매핑·전체 이력이 한 파일에 있음. 나머지는 대조 검증용 |
-| 저장소 | nowstart.org(Synology Git Server)에서 비공개 개발 → 공개 시 GitHub 미러 추가 | 처음부터 GitHub, Synology에서 직접 운영 | 이용 조건 답을 받기 전엔 비공개가 맞고, Actions·Pages·jsDelivr는 GitHub에서만 됨 |
+| 저장소 | GitHub 공개 레포 `now-start/kr-admin-codes` (SSH 주소 `nowstart.org`는 GitHub으로 연결됨) | 비공개 레포로 두기 | 작성자 결정으로 공개 유지. Actions·Pages·jsDelivr를 바로 쓸 수 있음. 처음엔 `nowstart.org`를 Synology Git Server로 잘못 보고 "비공개 개발 → 공개 시 GitHub 미러"로 적었다가 정정 |
 | 이력 범위 | 전체 포함, 정확도 보장은 2023-01-01 이후 (잠정) | 2023년 이후만 담기 | 원천에 이미 있어 추가 비용이 없음. 오래된 데이터 품질은 미검증 |
 
 ---
