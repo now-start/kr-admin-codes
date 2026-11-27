@@ -157,7 +157,7 @@ codes.legalDongsOf("1111051500");                            // 행정동에 속
 |---|-------|-------------|--------|----------|---------|----------|
 | 1 | 원천 조사 스파이크 | 원천별 형식·갱신 주기·과거 보관 범위·매핑 원천·이용 조건 확인, 샘플 파싱 | complete | - | - | [phase1-sources.md](../../../docs/research/phase1-sources.md) |
 | 2 | 스키마 + 파이프라인 | `model` 정의, 수집→정규화→검증→`data/` 생성을 로컬에서 실행 | complete | - | 1 | [plan](../plans/completed/phase2-schema-pipeline.plan.md) · [report](../reports/phase2-schema-pipeline-report.md) |
-| 3 | 배포 자동화 | collect/pages 워크플로, `meta.json`·`changes.json`, jsDelivr 미러 확인 | pending | with 4 | 2 | - |
+| 3 | 배포 자동화 | collect/pages 워크플로, `meta.json`·`changes.json`, jsDelivr 미러 확인 | in-progress (코드 완료, 레포 설정·머지 후 실행 확인) | with 4 | 2 | [report](../reports/phase3-automation-report.md) |
 | 4 | Java SDK | 내장 스냅샷, 조회·시점·변환·매핑, 갱신·폴백·검증 | complete | with 3 | 2 | [plan](../plans/completed/phase4-java-sdk.plan.md) · [report](../reports/phase4-java-sdk-report.md) |
 | 5 | 공개 | Maven Central 0.1.0, README·예제, 작성자 프로젝트에 실제 적용 | pending | - | 3, 4 | - |
 

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+      - uses: gradle/actions/setup-gradle@v6
+      - name: 빌드·테스트·커버리지
+        run: ./gradlew build
+
+  # GitHub 러너(해외)에서 행안부 게시판에 닿는지 확인한다. 정부 사이트가 해외 접속을 막으면
+  # 매일 수집이 동작하지 않으므로 미리 본다. 외부 사이트 상태에 따라 실패할 수 있어 빌드를 막지는 않는다.
+  mois-reachability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+      - uses: gradle/actions/setup-gradle@v6
+      - name: 최신 게시글·첨부 확인 (zip은 받지 않음)
+        run: ./gradlew :pipeline:run --args="check-source"
